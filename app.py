@@ -34,6 +34,16 @@ def alumnosGuardar():
     matricula      = request.form["txtMatriculaFA"]
     nombreapellido = request.form["txtNombreApellidoFA"]
     return f"Matrícula: {matricula} Nombre y Apellido: {nombreapellido}"
+def notificarActualizacionReserva():
+    pusher_client = pusher.Pusher(
+        app_id="1714541",
+        key="cda1cc599395d699a2af",
+        secret="9e9c00fc36600060d9e2",
+        cluster="us2",
+        ssl=True
+    )
+
+    pusher_client.trigger("canalRegistrosTemperaturaHumedad", "registroTemperaturaHumedad", {})
 
 @app.route("/buscar")
 def buscar():
@@ -88,29 +98,63 @@ def guardar():
 
     if id:
         sql = """
-        UPDATE sensor_log SET
-        Temperatura = %s,
-        Humedad     = %s
-        WHERE Id_Log = %s
+        UPDATE tst0_resevas SET
+        Nombre_Apellido = %s,
+        Telefono     = %s
+        WHERE Id_Reserva = %s
         """
-        val = (temperatura, humedad, id)
+        val = (nombre_apellido, telefono, id)
     else:
-        sql = """INSERT INTO sensor_log (Temperatura, Humedad, Fecha_Hora)
+        sql = """INSERT INTO tst0_resevas (Nombre_Apellido, Telefono, Fecha_Hora)
                                  VALUES (%s,          %s,      %s)"""
-        val =                           (temperatura, humedad, fechahora)
+        val =                           (nombre_apellido, telefono, fechahora)
     
     cursor.execute(sql, val)
     con.commit()
     con.close()
 
-    pusher_client = pusher.Pusher(
-        app_id="1714541",
-        key="cda1cc599395d699a2af",
-        secret="9e9c00fc36600060d9e2",
-        cluster="us2",
-        ssl=True
-    )
+    notificarActualizacionReserva()
 
-    pusher_client.trigger("canalRegistrosTemperaturaHumedad", "registroTemperaturaHumedad", {})
+    return make_response(jsonify({}))
+  
+@app.route("/editar", methods=["GET"])
+def editar():
+    if not con.is_connected():
+        con.reconnect()
 
-    return jsonify({})
+    id = request.args["id"]
+
+    cursor = con.cursor(dictionary=True)
+    sql    = """
+    SELECT Id_Reserva, Nombre_Apellido, Telefono FROM tst0_resevas
+    WHERE Id_Reserva = %s
+    """
+    val    = (id,)
+
+    cursor.execute(sql, val)
+    registros = cursor.fetchall()
+    con.close()
+
+    return make_response(jsonify(registros))
+
+@app.route("/eliminar", methods=["POST"])
+def eliminar():
+    if not con.is_connected():
+        con.reconnect()
+
+    id = request.form["id"]
+
+    cursor = con.cursor(dictionary=True)
+    sql    = """
+    DELETE FROM tst0_resevas
+    WHERE Id_Reserva = %s
+    """
+    val    = (id,)
+
+    cursor.execute(sql, val)
+    con.commit()
+    con.close()
+
+    notificarActualizacionTemperaturaHumedad()
+
+    return make_response(jsonify({}))
