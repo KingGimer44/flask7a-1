@@ -1,210 +1,127 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+from flask import Flask
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+from flask import render_template
+from flask import request
+from flask import jsonify, make_response
 
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+import pusher
 
-    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+import mysql.connector
+import datetime
+import pytz
 
-    <title>App</title>
-</head>
-<body>
-    <div class="container">
-      <form id="frmTemperaturaHumedad" method="post">
-          <input type="hidden" id="id" name="id">
+con = mysql.connector.connect(
+    host="185.232.14.52",
+    database="u760464709_tst_sep",
+    user="u760464709_tst_sep_usr",
+    password="dJ0CIAFF="
+)
 
-          <div class="mb-1">
-              <label for="temperatura">Temperatura</label>
-              <input type="number" id="temperatura" name="temperatura" class="form-control">
-          </div>
-          <div class="mb-1">
-              <label for="humedad">Humedad</label>
-              <input type="number" id="humedad" name="humedad" class="form-control">
-          </div>
-          <div class="mb-1">
-              <button id="guardar" name="guardar" class="btn btn-dark">Guardar</button>
-              <button type="reset" id="cancelar" name="cancelar" class="btn btn-link">Cancelar</button>
-          </div>
-      </form>
-      <table class="table table-sm">
-        <thead>
-          <tr>
-            <th>Temperatura</th>
-            <th>Humedad</th>
-            <th>Fecha</th>
-            <th>Hora</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody id="tbodyTemperaturaHumedad"></tbody>
-      </table>
-    </div>
+app = Flask(__name__)
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+@app.route("/")
+def index():
+    con.close()
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <div class="app-float-button bg-body" style="z-index: 3; position: fixed; bottom: 5px; left: 5px; cursor: pointer;">
-        <ul class="list-group list-group-horizontal">
-            <li class="list-group-item" data-bs-theme-value="light">
-                <i class="bi bi-sun-fill"></i>
-            </li>
-            <li class="list-group-item" data-bs-theme-value="dark">
-                <i class="bi bi-moon-stars-fill"></i>
-            </li>
-            <li class="list-group-item" data-bs-theme-value="auto">
-                <i class="bi bi-circle-half"></i>
-            </li>
-        </ul>
-    </div>
-    <script>
-        /*!
-        * Color mode toggler for Bootstrap's docs (https://getbootstrap.com/)
-        * Copyright 2011-2022 The Bootstrap Authors
-        * Licensed under the Creative Commons Attribution 3.0 Unported License.
-        */
+    return render_template("app.html")
 
-        /** Reescrito */
+@app.route("/alumnos")
+def alumnos():
+    con.close()
 
-        var bootstrapTheme = localStorage.getItem("theme")
+    return render_template("alumnos.html")
 
-        function getPreferredTheme() {
-            if (bootstrapTheme) {
-                return bootstrapTheme
-            }
+@app.route("/prueva")
+def alumnos():
+    con.close()
 
-            return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
-        }
+    return render_template("pruevas.html")
 
-        function setTheme(theme) {
-            if (theme === "auto" && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-                document.documentElement.setAttribute("data-bs-theme", "dark")
-            }
-            else {
-                document.documentElement.setAttribute("data-bs-theme", ((theme == "auto") ? "light" : theme))
-            }
-        }
+@app.route("/alumnos/guardar", methods=["POST"])
+def alumnosGuardar():
+    con.close()
+    matricula      = request.form["txtMatriculaFA"]
+    nombreapellido = request.form["txtNombreApellidoFA"]
 
-        function showActiveTheme(theme) {
-            $("[data-bs-theme-value]").removeClass("bg-primary text-white active")
-            $(`[data-bs-theme-value="${theme}"]`).addClass("bg-primary text-white active")
-        }
+    return f"Matrícula {matricula} Nombre y Apellido {nombreapellido}"
 
-        $(document).on("click", '[data-bs-theme-value]', function (event) {
-            const theme = this.getAttribute("data-bs-theme-value")
-            localStorage.setItem("theme", theme)
-            setTheme(theme)
-            showActiveTheme(theme)
-        })
+# Código usado en las prácticas
+@app.route("/buscar")
+def buscar():
+    if not con.is_connected():
+        con.reconnect()
 
-        window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function (event) {
-            if (bootstrapTheme !== "light"
-            || bootstrapTheme !== "dark") {
-                setTheme(getPreferredTheme())
-            }
-        })
+    cursor = con.cursor(dictionary=True)
+    cursor.execute("""
+    SELECT Id_Reserva, Nombre_Apellido, Telefono, DATE_FORMAT(Fecha_Hora, '%d/%m/%Y') AS Fecha, DATE_FORMAT(Fecha_Hora, '%H:%i:%s') AS Hora FROM sensor_log
+    ORDER BY Id_Reserva DESC
+    LIMIT 10 OFFSET 0
+    """)
+    registros = cursor.fetchall()
 
-        document.addEventListener("DOMContentLoaded", function (event) {
-            setTheme(bootstrapTheme)
-            showActiveTheme(getPreferredTheme())
-        })
-    </script>
+    con.close()
 
-    <script>
-        window.addEventListener("load", function (event) {
-            function buscar() {
-                $.get("/buscar", function (respuesta) {
-                    $("#tbodyTemperaturaHumedad").html("")
+    return make_response(jsonify(registros))
 
-                    var fechaAnterior = ""
+@app.route("/editar", methods=["GET"])
+def editar():
+    if not con.is_connected():
+        con.reconnect()
 
-                    for (var x in respuesta) {
-                        var temperaturaHumedad = respuesta[x]
+    id = request.args["id"]
 
-                        var fecha = ""
-                        var fechaTemp = temperaturaHumedad["Fecha"]
+    cursor = con.cursor(dictionary=True)
+    sql    = """
+    SELECT Id_Log, Temperatura, Humedad FROM sensor_log
+    WHERE Id_Log = %s
+    """
+    val    = (id,)
 
-                        if (fechaAnterior != fechaTemp) {
-                            fecha         = fechaTemp
-                            fechaAnterior = fechaTemp
-                        }
+    cursor.execute(sql, val)
+    registros = cursor.fetchall()
+    con.close()
 
-                        $("#tbodyTemperaturaHumedad").append(`<tr>
-                            <td>${temperaturaHumedad["Temperatura"]}</td>
-                            <td>${temperaturaHumedad["Humedad"]}</td>
-                            <td>${fecha}</td>
-                            <td>${temperaturaHumedad["Hora"]}</td>
-                            <td>
-                                <button class="btn btn-primary btn-editar" data-id="${temperaturaHumedad["Id_Log"]}">Editar</button>
-                            </td>
-                        </tr>`)
-                    }
-                })
-            }
+    return make_response(jsonify(registros))
 
-            buscar()
+@app.route("/guardar", methods=["POST"])
+def guardar():
+    if not con.is_connected():
+        con.reconnect()
 
-            $(document).on("click", ".btn-editar", function (event) {
-                var id = $(this).attr("data-id")
+    id          = request.form["id"]
+    temperatura = request.form["temperatura"]
+    humedad     = request.form["humedad"]
+    fechahora   = datetime.datetime.now(pytz.timezone("America/Matamoros"))
+    
+    cursor = con.cursor()
 
-                $.get("/editar", {id: id}, function (respuesta) {
-                    console.log(respuesta)
-                    var temperaturaHumedad = respuesta[0]
+    if id:
+        sql = """
+        UPDATE sensor_log SET
+        Temperatura = %s,
+        Humedad     = %s
+        WHERE Id_Log = %s
+        """
+        val = (temperatura, humedad, id)
+    else:
+        sql = """
+        INSERT INTO sensor_log (Temperatura, Humedad, Fecha_Hora)
+                        VALUES (%s,          %s,      %s)
+        """
+        val =                  (temperatura, humedad, fechahora)
+    
+    cursor.execute(sql, val)
+    con.commit()
+    con.close()
 
-                    $("#id")
-                    .val(temperaturaHumedad["Id_Log"])
-                    .trigger("focus")
+    pusher_client = pusher.Pusher(
+        app_id='1767967',
+        key='34091ea15b1a362fb38d',
+        secret='9a986831a832e499c9e4',
+        cluster='us2',
+        ssl=True
+    )
 
-                    $("#temperatura").val(temperaturaHumedad["Temperatura"])
-                    $("#humedad").val(temperaturaHumedad["Humedad"])
-                })
-            })
-            
-            $("#frmTemperaturaHumedad")
-            .submit(function (event)  {
-                event.preventDefault()
+    pusher_client.trigger("canalRegistrosTemperaturaHumedad", "registroTemperaturaHumedad", {})
 
-                $.post("/guardar", $(this).serialize(), function (respuesta) {
-                    $("#frmTemperaturaHumedad").get(0).reset()
-                })
-            })
-            .on("reset", function (event) {
-                $("#id").val("")
-            })
-
-            Pusher.logToConsole = true
-            
-            var pusher = new Pusher("cda1cc599395d699a2af", {
-                cluster: "us2"
-            })
-
-            // Canal ---> Donde se concentran los hilos con los clientes conectados
-            var channel = pusher.subscribe("canalRegistrosTemperaturaHumedad");
-
-            // Evento --> El código que se accionará con la información enviada o el uso del canal
-            channel.bind("registroTemperaturaHumedad", function (temperaturaHumedad) {
-                // 1. Notificar el evento
-                // alert("Ocurrió el evento")
-
-                // 2. Recibir información enviada en el evento
-                // console.log(temperaturaHumedad)
-
-                // 3. Trabajar información enviada por el evento
-                /**
-                $("#tbodyTemperaturaHumedad").prepend(`<tr>
-                    <td>${temperaturaHumedad.temperatura}</td>
-                    <td>${temperaturaHumedad.humedad}</td>
-                    <td></td>
-                </tr>`)
-                */
-
-                // 4. Mandar a llamar otro código luego del evento
-                buscar()
-            })
-        })
-    </script>    
-</body>
-</html>
+    return jsonify({})
