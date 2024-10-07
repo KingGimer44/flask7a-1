@@ -72,8 +72,8 @@ def editar():
 
     cursor = con.cursor(dictionary=True)
     sql    = """
-    SELECT Id_Log, Temperatura, Humedad FROM sensor_log
-    WHERE Id_Log = %s
+    SELECT Id_Reservas, Nombre_Apellido, Telefono FROM tst0_reservas
+    WHERE Id_Reservas = %s
     """
     val    = (id,)
 
@@ -97,15 +97,15 @@ def guardar():
 
     if id:
         sql = """
-        UPDATE sensor_log SET
-        Temperatura = %s,
-        Humedad     = %s
-        WHERE Id_Log = %s
+        UPDATE tst0_reservas SET
+        Nombre_Apellido = %s,
+        Telefono     = %s
+        WHERE Id_Reservas = %s
         """
         val = (temperatura, humedad, id)
     else:
         sql = """
-        INSERT INTO sensor_log (Temperatura, Humedad, Fecha_Hora)
+        INSERT INTO tst0_reservas (Nombre_Apellido, Telefono, Fecha_Hora)
                         VALUES (%s,          %s,      %s)
         """
         val =                  (temperatura, humedad, fechahora)
