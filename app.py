@@ -36,10 +36,10 @@ def alumnosGuardar():
     return f"Matrícula: {matricula} Nombre y Apellido: {nombreapellido}"
 def notificarActualizacionReserva():
     pusher_client = pusher.Pusher(
-        app_id="1714541",
-        key="cda1cc599395d699a2af",
-        secret="9e9c00fc36600060d9e2",
-        cluster="us2",
+        app_id='1767967',
+        key='34091ea15b1a362fb38d',
+        secret='9a986831a832e499c9e4',
+        cluster='us2',
         ssl=True
     )
 
