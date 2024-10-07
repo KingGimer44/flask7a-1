@@ -13,8 +13,8 @@
     <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
 </head>
 <body>
-    <div class="container">
-      <form id="frmTemperaturaHumedad" method="post">
+<!--     <div class="container"> -->
+<!--       <form id="frmTemperaturaHumedad" method="post">
           <input type="hidden" id="id" name="id">
 
           <div class="mb-1">
@@ -28,8 +28,24 @@
           <div class="mb-1">
               <button id="guardar" name="guardar" class="btn btn-dark">Guardar</button>
               <button type="reset" id="cancelar" name="cancelar" class="btn btn-link">Cancelar</button>
-          </div>
-      </form>
+          </div> -->    
+        <div class="container">
+            <form id="frmTemperaturaHumedad" method="post">
+            <input type="hidden" id="id" name="id">
+        
+        <div class="mb-1">
+            <label for="nombre_apellido">Nombre y Apellido</label>
+            <input type="text" id="nombre_apellido" name="nombre_apellido" class="form-control">
+        </div>
+        <div class="mb-1">
+            <label for="telefono">Telefono</label>
+            <input type="number" id="telefono" name="telefono" class="form-control">
+        </div>
+        <div class="mb-1">
+            <button id="guardar" name="guardar" class="btn btn-dark">Guardar</button>
+            <button type="reset" id="cancelar" name="cancelar" class="btn btn-link">Cancelar</button>
+        </div>
+        </form>
       <table class="table table-sm">
         <thead>
           <tr>
