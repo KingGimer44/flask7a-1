@@ -53,7 +53,7 @@ def buscar():
 
     cursor = con.cursor(dictionary=True)
     cursor.execute("""
-    SELECT Id_Reserva, Nombre_Apellido, Telefono, DATE_FORMAT(Fecha_Hora, '%d/%m/%Y') AS Fecha, DATE_FORMAT(Fecha_Hora, '%H:%i:%s') AS Hora FROM sensor_log
+    SELECT Id_Reserva, Nombre_Apellido, Telefono, DATE_FORMAT(Fecha_Hora, '%d/%m/%Y') AS Fecha, DATE_FORMAT(Fecha_Hora, '%H:%i:%s') AS Hora FROM tst0_reservas
     ORDER BY Id_Reserva DESC
     LIMIT 10 OFFSET 0
     """)
