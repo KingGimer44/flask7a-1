@@ -32,7 +32,7 @@ def alumnos():
     return render_template("alumnos.html")
 
 @app.route("/prueva")
-def alumnos():
+def prueva():
     con.close()
 
     return render_template("pruevas.html")
