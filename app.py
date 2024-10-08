@@ -1,11 +1,9 @@
 from flask import Flask
-
 from flask import render_template
 from flask import request
 from flask import jsonify, make_response
 
 import pusher
-
 import mysql.connector
 import datetime
 import pytz
@@ -22,30 +20,20 @@ app = Flask(__name__)
 @app.route("/")
 def index():
     con.close()
-
     return render_template("app.html")
 
 @app.route("/alumnos")
 def alumnos():
     con.close()
-
     return render_template("alumnos.html")
-
-@app.route("/prueva")
-def prueva():
-    con.close()
-
-    return render_template("pruevas.html")
 
 @app.route("/alumnos/guardar", methods=["POST"])
 def alumnosGuardar():
     con.close()
     matricula      = request.form["txtMatriculaFA"]
     nombreapellido = request.form["txtNombreApellidoFA"]
-
     return f"Matrícula {matricula} Nombre y Apellido {nombreapellido}"
 
-# Código usado en las prácticas
 @app.route("/buscar")
 def buscar():
     if not con.is_connected():
@@ -53,12 +41,12 @@ def buscar():
 
     cursor = con.cursor(dictionary=True)
     cursor.execute("""
-    SELECT Id_Reserva, Nombre_Apellido, Telefono, DATE_FORMAT(Fecha_Hora, '%d/%m/%Y') AS Fecha, DATE_FORMAT(Fecha_Hora, '%H:%i:%s') AS Hora FROM tst0_reservas
+    SELECT Id_Reserva, Nombre_Apellido, Telefono, DATE_FORMAT(Fecha, '%d/%m/%Y') AS Fecha 
+    FROM tst0_reservas
     ORDER BY Id_Reserva DESC
     LIMIT 10 OFFSET 0
     """)
     registros = cursor.fetchall()
-
     con.close()
 
     return make_response(jsonify(registros))
@@ -69,14 +57,12 @@ def editar():
         con.reconnect()
 
     id = request.args["id"]
-
     cursor = con.cursor(dictionary=True)
     sql    = """
-    SELECT Id_Reservas, Nombre_Apellido, Telefono FROM tst0_reservas
-    WHERE Id_Reservas = %s
+    SELECT Id_Reserva, Nombre_Apellido, Telefono FROM tst0_reservas
+    WHERE Id_Reserva = %s
     """
     val    = (id,)
-
     cursor.execute(sql, val)
     registros = cursor.fetchall()
     con.close()
@@ -88,10 +74,10 @@ def guardar():
     if not con.is_connected():
         con.reconnect()
 
-    id          = request.form["id"]
-    temperatura = request.form["temperatura"]
-    humedad     = request.form["humedad"]
-    fechahora   = datetime.datetime.now(pytz.timezone("America/Matamoros"))
+    id             = request.form["id"]
+    nombreapellido = request.form["nombre_apellido"]
+    telefono       = request.form["telefono"]
+    fechahora      = datetime.datetime.now(pytz.timezone("America/Matamoros"))
     
     cursor = con.cursor()
 
@@ -99,20 +85,21 @@ def guardar():
         sql = """
         UPDATE tst0_reservas SET
         Nombre_Apellido = %s,
-        Telefono     = %s
-        WHERE Id_Reservas = %s
+        Telefono = %s
+        WHERE Id_Reserva = %s
         """
-        val = (temperatura, humedad, id)
+        val = (nombreapellido, telefono, id)
     else:
         sql = """
-        INSERT INTO tst0_reservas (Nombre_Apellido, Telefono, Fecha_Hora)
-                        VALUES (%s,          %s,      %s)
+        INSERT INTO tst0_reservas (Nombre_Apellido, Telefono, Fecha)
+                        VALUES (%s,              %s,      %s)
         """
-        val =                  (temperatura, humedad, fechahora)
+        val =                 (nombreapellido, telefono, fechahora)
     
     cursor.execute(sql, val)
     con.commit()
     con.close()
+
 
     pusher_client = pusher.Pusher(
         app_id='1767967',
@@ -122,6 +109,6 @@ def guardar():
         ssl=True
     )
 
-    pusher_client.trigger("canalRegistrosTemperaturaHumedad", "registroTemperaturaHumedad", {})
+    pusher_client.trigger("canalRegistrosContactos", "registroContactos", {})
 
     return jsonify({})
