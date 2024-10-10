@@ -18,6 +18,11 @@ def index():
     con.close()
     return render_template("app.html")
 
+@app.route("/alumnos")
+def alumnos():
+    con.close()
+    return render_template("alumnos.html")
+
 @app.route("/buscar")
 def buscar():
     if not con.is_connected():
